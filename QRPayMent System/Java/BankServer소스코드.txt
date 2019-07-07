@@ -1,0 +1,67 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+ 
+public class Bank implements Runnable{
+ 
+	private ServerSocket server = null;
+	private String[] Account;
+	private String[] List= {"결제금액","결제장소","결제자카드이름","결제자카드번호","결제자카드유효기간","결제자카드은행이름","이체하는곳계좌주인","이체하는곳계좌번호"};
+ 
+	public Bank(int port) {
+		try {
+			System.out.println("server port : "+port);
+			server = new ServerSocket(port);
+		} catch (IOException e) {
+			System.err.println("결제 요청을 받아들일수없습니다.");
+			System.exit(1); // 종료
+		}
+	}
+ 
+	@Override
+	public void run() {
+ 
+		while (true) {
+			try {
+				Socket socket = server.accept();
+				System.out.println("결제요청.....\n");
+ 
+				OutputStream out = socket.getOutputStream();
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						socket.getInputStream()));
+                                // 클라이언트 데이터 읽기
+				String line = in.readLine();
+				Account=line.split(",");			
+				if(Account.length==8) {
+				for(int i=0;i<=Account.length-1;i++) {
+					System.out.println(List[i]+" : " + Account[i]);
+				}
+				out.write("Success\n".getBytes());
+				out.flush();
+				}
+				else {
+					System.out.print("결제가 실패했습니다");
+					out.write("오류 발생했습니다.".getBytes());
+				// 클라이언트의 접속을 끊음.
+				out.close();
+				in.close();
+				socket.close();
+				}
+ 
+			} catch (Exception e) {
+				System.err.println(e);
+			}			
+ 
+		}
+	}
+
+	public static void main(String[] args) {
+ 
+		Thread server = new Thread(new Bank(1004));
+		server.start();
+	}
+ 
+}
